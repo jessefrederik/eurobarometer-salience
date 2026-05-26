@@ -68,18 +68,24 @@ issue_specs <- tribble(
 )
 
 # --- Issue -> real-world macro variable map (for correlation) -----------------
-# expected_sign: the hypothesised direction of the salience~macro relationship.
+# The focused set: each issue paired with the Eurostat real-world variable it
+# should plausibly respond to. `unit`/`macro_axis` drive the dual-axis labels;
+# `expected_sign` is the hypothesised direction. `crime_per_100k` is built in the
+# analysis as homicide+robbery+burglary per 100k (the three series are annual).
 ISSUE_MACRO <- tribble(
-  ~issue,                      ~macro_var,           ~macro_label,                       ~expected_sign,
-  "unemployment",              "unemp_rate",         "Unemployment rate (Eurostat)",     "+",
-  "inflation_cost_of_living",  "inflation_rate",     "HICP inflation (Eurostat)",        "+",
-  "immigration",               "asylum_rate",        "Asylum apps per 100k (Eurostat)",  "+",
-  "immigration",               "total_permit_first", "First residence permits (Eurostat)","+",
-  "economy",                   "gdp_per_cap_growth", "GDP per capita growth (Eurostat)", "-",
-  "crime",                     "homicide_per_100k",  "Homicides per 100k (Eurostat)",    "+",
-  "energy",                    "energy_rate",        "HICP energy inflation (Eurostat)", "+",
-  "terrorism",                 "terror_national",    "Terrorism deaths (GTD, optional)", "+"
+  ~issue,                      ~macro_var,       ~macro_label,                  ~macro_axis,                          ~expected_sign,
+  "unemployment",              "unemp_rate",     "Unemployment rate",           "Unemployment rate (%)",              "+",
+  "inflation_cost_of_living",  "inflation_rate", "HICP inflation",              "HICP inflation (%)",                 "+",
+  "energy",                    "energy_rate",    "HICP energy inflation",       "HICP energy inflation (%)",          "+",
+  "immigration",               "asylum_rate",    "Asylum applications per 100k","Asylum applications (per 100k)",     "+",
+  "crime",                     "crime_per_100k", "Recorded crime per 100k",     "Recorded crime per 100k",            "+"
 )
+
+# Issues this analysis focuses on (descriptive + correlation). Salience side label
+# is "naming X the most important issue".
+FOCUS_ISSUES <- ISSUE_MACRO$issue
+focus_label <- c(unemployment = "unemployment", inflation_cost_of_living = "inflation / cost of living",
+                 energy = "energy", immigration = "immigration", crime = "crime")
 
 # --- EC open-data volumes (European Commission portal; no login) --------------
 # Standard EB "Volume A" trend tables. Keys resolved 2026-05-26 via data.europa.eu

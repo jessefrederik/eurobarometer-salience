@@ -1,164 +1,105 @@
-# Eurobarometer issue salience
+# Eurobarometer issue salience vs real-world conditions
 
-An end-to-end, reproducible R pipeline that measures how salient different
-**problems** are to Europeans — in three contexts (their **country**, the **EU**,
-and **personally**) — and relates those perceptions to **real-world conditions**
-(unemployment, inflation, asylum flows, GDP, crime, …).
+A reproducible R pipeline measuring how salient different problems are to Europeans
+— the share naming each as the most important issue facing their country — and how
+that tracks the **real-world conditions** the problem refers to:
 
-It downloads the data, harmonises ~70 Eurobarometer waves (2003–2026) into a
-respondent-level dataset, extracts each issue in all three question contexts,
-pulls matching macro indicators from Eurostat, and produces (4) descriptive
-small-multiples of problem perceptions by country over time and (5) correlation
-figures linking perceptions to the real world.
+| Problem perception | Real-world variable (Eurostat) |
+|---|---|
+| Unemployment | Unemployment rate |
+| Inflation / cost of living | HICP inflation |
+| Energy | HICP energy inflation |
+| Immigration | Asylum applications per 100k |
+| Crime | Recorded crime per 100k (homicide + robbery + burglary) |
 
-![Immigration salience by country and context](output/descriptive_immigration.png)
-*Percentage naming immigration the most important issue, by country, 2005–2026.
-Red = facing your country, blue = facing the EU, black = facing you personally.*
+It harmonises ~70 Eurobarometer waves (2002–2026) into a respondent-level dataset,
+extracts each issue's salience, pulls the matching Eurostat series, and reports the
+within-country correlation between perception and reality.
 
-![Do real-world conditions track perceptions?](output/correlation_summary.png)
+![Does perception track conditions?](output/correlation_summary.png)
 
-Perception and reality can also **decouple**: EU-wide concern about immigration
-tracked asylum applications closely during the 2015–16 crisis, then diverged
-(concern stayed high as flows fell; the 2022–24 asylum resurgence did not revive it).
+📄 **Write-up:** [How closely does problem perception track reality?](docs/analysis.md)
 
-![Immigration as an EU problem vs total EU asylum applications](output/immigration_eu_vs_total_asylum.png)
+## Headline finding
 
-The coupling also splits sharply East vs West: in **Western Europe** concern tracks
-the asylum flows the region actually receives (r ≈ 0.6), while in **Central &
-Eastern Europe** a brief 2015 transit spike gave way to lasting concern that is
-largely decoupled from local arrivals (r ≈ 0.2).
+Perception tracks **economic** conditions closely and **immigration** loosely:
 
-![East vs West](output/immigration_eastwest_vs_asylum.png)
+| Perception ~ real-world variable | Pearson | Spearman (robust) |
+|---|---|---|
+| Unemployment ~ unemployment rate | 0.78 | 0.78 |
+| Inflation ~ HICP inflation | 0.72 | 0.62 |
+| Crime ~ recorded crime | 0.51 | 0.53 |
+| Energy ~ HICP energy inflation | 0.49 | **0.24** |
+| Immigration ~ asylum applications | 0.26 | 0.30 |
 
-For two countries the EU-wide asylum figures miss the relevant signal, so the
-pipeline adds national sources: **Spain's** irregular (largely maritime) arrivals
-and the **UK's** asylum claims (the UK is absent from Eurostat post-Brexit).
-Tellingly, neither tracks salience closely — Spain's record 2018/2023–24 arrivals
-barely moved concern (r ≈ 0.1), and UK concern peaked in the Brexit/EU-free-movement
-years when asylum claims were *low* (r ≈ −0.4). Perceived immigration ≠ asylum/boat
-arrivals.
-
-![Spain & UK](output/immigration_spain_uk_arrivals.png)
-
-**Frontex** detections of irregular border crossings (by route, monthly) are the
-media-salient arrivals measure, and they track perceptions more tightly than
-asylum applications do: EU-wide r ≈ 0.49 (vs 0.39 for asylum apps), and among
-frontline countries Spain ≈ 0.68 (Western African + W. Mediterranean routes),
-Italy ≈ 0.40 (Central Med), Greece ≈ 0.18 (Eastern Med — the huge 2015 spike with
-almost no salience response, the debt crisis dominating). Frontex has no Channel
-route, so the UK isn't covered here.
-
-![Frontex frontline](output/immigration_frontex_frontline.png)
-
-(Spain is extended back to 2002 with the Spanish Interior Ministry series, which
-matches Frontex on their overlap, annual r = 0.99. The boat-arrivals link is a
-*modern* phenomenon — r = 0.68 since 2009 but 0.27 since 2002, because early-2000s
-Spanish concern tracked the regular-migration boom, not boats.) Frontex publishes
-**no API for the historical series** — only the current month is queryable — so the
-committed monthly CSV is refreshed by downloading the workbook from the
-[Frontex migratory map](https://www.frontex.europa.eu/we-know/migratory-map/)
-into `data/external/` and running `R/build_frontex_csv.R`.
+Adding **Spearman** alongside Pearson matters: the energy link nearly halves under
+rank correlation (0.49 → 0.24), revealing it is driven by the single 2022 energy-price
+spike rather than a steady relationship. Unemployment and crime are robust to it.
 
 ## What it produces
 
-| # | Deliverable | Stage |
-|---|---|---|
-| 1 | Download all Eurobarometer + Eurostat data | `00`, `03` |
-| 2 | Process to **personal / national / EU** problem perceptions | `01`, `02` |
-| 3 | Correlate perceptions with real-world variables | `03`, `04` |
-| 4 | Descriptive graphs: perceptions by country (facet) × year (x-axis) | `05` |
-| 5 | Correlation graphs: real-world variables vs perceptions | `06` |
+- `data/salience_contexts.csv` — salience by issue × country × wave × context
+- `data/correlations.csv` — within-country Pearson, Spearman, and panel-FE estimates
+- `output/correlation_summary.png` — the forest plot above
+- `output/overlay_<issue>.png` — per-country **dual-axis** time series: salience (%)
+  vs the real-world variable in its own units (no z-scores, so magnitudes are kept)
+- `output/descriptive_<issue>.png` — salience over time, three question contexts
 
-Outputs land in `data/` (tidy tables: `salience_contexts.csv`, `correlations.csv`)
-and `output/` (figures).
+![Unemployment overlay](output/overlay_unemployment.png)
 
-📄 **Write-up:** [Does immigration get more salient when migration rises?](docs/immigration_vs_migration.md)
-— the immigration-vs-real-world-migration analysis, with findings and caveats.
+## Data
 
-## Data sources & tiers
+- **Perceptions** — Eurobarometer "most important issues" battery (asked for *your
+  country*, *you personally*, and *the EU*). Harmonised from GESIS microdata
+  (2002–2024) and extended with the European Commission's open result volumes
+  (2024–Spring 2026). The 3-context split is the pipeline's distinctive feature;
+  the correlation analysis uses the national ("your country") context.
+- **Real-world** — Eurostat: `une_rt_m` (unemployment), `prc_hicp_manr` (HICP
+  inflation + energy), `migr_asyappctzm` (asylum), `crim_gen`/`crim_off_cat`
+  (crime). All open, fetched via the `eurostat` package.
 
-| Source | Access | Coverage | Used for |
-|---|---|---|---|
-| **GESIS** Eurobarometer microdata | Free account; **not redistributable** | 2003–2026, all issues × 3 contexts, individual level | full-history salience + the multilevel model |
-| **European Commission** Standard EB result volumes ([data.europa.eu](https://data.europa.eu)) | Open, no login | latest rounds (EB 101–105, 2023–2026) | latest waves, appended after the microdata boundary |
-| **Eurostat** (`eurostat` R package) | Open API | 2001–present | all real-world macro indicators |
-| **Global Terrorism Database** + UK supplements | Manual download (optional) | terrorism deaths; UK unemployment/asylum | optional; pipeline skips gracefully if absent |
-
-The three-context split over a long history only exists in the GESIS microdata, so
-that is the primary Eurobarometer source; the open EC volumes extend each series to
-the most recent wave. On the overlapping wave (EB 101.3) the two agree to
-**r = 0.999, mean abs. diff 0.33 pp** — they are interchangeable.
-
-> **The three contexts.** Eurobarometer asks the "most important issues" battery
-> three times: *facing (your country)* (QA3), *facing you personally* (QA4), and
-> *facing the EU* (QA5). Most analyses collapse these; this pipeline keeps them
-> apart, which is the core feature.
-
-## Setup
+## Setup & running
 
 ```r
-# 1. Restore the pinned package environment
 install.packages("renv"); renv::restore()
-
-# 2. (Optional, for the full history) point at your GESIS microdata cache:
-Sys.setenv(EB_DATA_ROOT = "/path/to/Eurobarometer_individual")  # holds ZA####.rds
-#    To fetch microdata: register free at https://login.gesis.org, then run
-#    R/download_gesis_microdata.R (uses the `gesisdata` package + your credentials).
+Sys.setenv(EB_DATA_ROOT = "/path/to/Eurobarometer_individual")  # GESIS .rds files
 ```
-
-No microdata? The pipeline still runs on the **EC-only tier** (open, no account) —
-it just limits the three-context series to the recent EC waves.
-
-## Running
 
 ```sh
-Rscript run_all.R            # full pipeline (auto-detects microdata)
-SKIP="03 04" Rscript run_all.R   # skip stages by number
+Rscript run_all.R          # full pipeline; auto-detects microdata
 ```
 
-Stages (each idempotent; reads/writes `data/` + `output/`):
+No microdata? It still runs on the EC open volumes (recent waves only). To fetch
+the full history, register free at <https://login.gesis.org> and run
+`R/download_gesis_microdata.R`. GESIS microdata is licence-restricted and **not**
+committed here.
+
+Stages:
 
 ```
-00_download_eurobarometer.R   EC open volumes -> data/ec_salience.csv (+ microdata status)
-01_build_micro.R              harmonise GESIS waves -> core_micro (respondent level)
-02_build_contexts.R           issue × {country, EU, personal} -> data/salience_contexts.csv
-03_build_macro.R              Eurostat (+optional GTD/UK)   -> data/core_macro.rds
-04_correlate.R                salience ↔ macro -> data/correlations.csv
-05_plot_descriptive.R         output/descriptive_<issue>.png
-06_plot_correlations.R        output/correlation_overlay_*.png + correlation_summary.png
+00_download_eurobarometer.R   EC open volumes -> data/ec_salience.csv
+01_build_micro.R              harmonise GESIS waves -> core_micro
+02_build_contexts.R           issue × context salience -> data/salience_contexts.csv
+03_build_macro.R              Eurostat -> data/core_macro.rds
+04_correlate.R                within-country Pearson + Spearman + panel FE
+05_plot_descriptive.R         salience over time, per issue
+06_plot_correlations.R        dual-axis overlays + correlation summary
 ```
 
-## Methods
+## Method notes
 
-- **Three-context extraction** (`R/context_extract.R`): per issue, a respondent
-  "mentions" it in a context if any matching survey item is ticked (`pmax` over
-  items — handles split-ballots and multi-item issues). Issues and their
-  label-matching regexes live in `config.R` (`issue_specs`).
-- **Correlation** (`04_correlate.R`), per issue↔macro pair in `config.R`
-  (`ISSUE_MACRO`): (i) pooled within-country z-score correlation; (ii) panel
-  fixed-effects (country dummies, cluster-robust SE) in levels and first
-  differences; (iii) an individual-level multilevel logit (`glmer`) for
-  unemployment salience.
-
-## Repository layout
-
-```
-config.R              paths, issue specs, issue↔macro map, country set, EC keys
-R/                    pure functions (harmonisation, context extraction, EC parser, theme, utils)
-R/macro/              one Eurostat loader per indicator
-00–06_*.R, run_all.R  the pipeline
-data/reference/       small committed inputs (date corrections, EC snapshot)
-output/               figures (a curated few committed)
-```
+- Correlations are **within-country** (per-country z-scores, pooled) at **annual**
+  resolution (crime statistics are annual; annualising keeps the five comparable).
+- **Pearson and Spearman** are both reported — Spearman is the honest robustness
+  check against the right-skewed rates (energy especially).
+- Overlays use **real units on a dual axis**, not z-scores, so magnitudes are visible.
 
 ## Caveats
 
-- **GESIS microdata are not included** (licence). The repo is code-only; you
-  download data at runtime.
-- **Cyprus**: `CY-TCC` (the Turkish-Cypriot Community sample) is kept **separate**
-  from `CY`, not merged — merging it halved Cyprus's salience on every issue.
-- **Environment** salience combines "environment" + "climate change" (excludes
-  standalone energy); a few waves bundle energy irreducibly into one item.
-- Terrorism / UK series require the optional manual files; otherwise skipped.
+- Eurobarometer runs ~2–3 waves/year, so the perception side caps temporal resolution.
+- Correlations are **descriptive co-movement, not causal** — no identification strategy.
+- Crime statistics are annual and sparser than the monthly economic series.
+- Microdata and EC volumes are spliced at 2024 (validated overlap r = 0.999); Cyprus
+  excludes the separately-sampled Turkish-Cypriot Community.
 
-Code: MIT. Data: see `LICENSE` and each provider's terms.
+Code: MIT. Data: GESIS (no redistribution), Eurostat (© EU), EC open volumes.

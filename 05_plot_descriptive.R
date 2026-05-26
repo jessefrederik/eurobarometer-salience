@@ -46,7 +46,7 @@ make_descriptive <- function(iss, label) {
   message("  -> ", out)
 }
 
-issues_present <- intersect(issue_specs$issue, unique(salience$issue))
+issues_present <- intersect(FOCUS_ISSUES, unique(salience$issue))
 message("Descriptive charts for ", length(issues_present), " issues...")
 for (iss in issues_present) {
   lab <- tolower(issue_specs$label[match(iss, issue_specs$issue)])
