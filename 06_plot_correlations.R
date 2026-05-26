@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 
 source("config.R"); source("R/utils.R")
-library(countrycode)
+library(countrycode); library(slider)
 
 sal_col <- "#5e3c99"; macro_col <- "#d95f02"
 
@@ -21,10 +21,13 @@ salience <- readr::read_csv(file.path(DIR_DATA, "salience_contexts.csv"), show_c
   filter(context == "cntry", country_code %in% setdiff(EU_SET, "EU"))
 
 # --- (a) dual-axis overlays per pair -----------------------------------------
-overlay <- function(issue, macro_var, macro_axis, flabel) {
+overlay <- function(issue, macro_var, macro_axis, flabel, monthly) {
   d_sal <- salience %>% filter(issue == !!issue) %>%
     transmute(country_code, date, pct) %>% filter(!is.na(pct))
   d_mac <- macro %>% select(country_code, date, mv = all_of(macro_var)) %>% filter(!is.na(mv))
+  if (monthly) d_mac <- d_mac %>% arrange(country_code, date) %>% group_by(country_code) %>%
+    mutate(mv = slider::slide_dbl(mv, mean, .before = 2, .complete = TRUE)) %>%
+    ungroup() %>% filter(!is.na(mv))           # trailing 3-month average
   keep <- intersect(unique(d_sal$country_code), unique(d_mac$country_code))
   d_sal <- d_sal %>% filter(country_code %in% keep) %>% mutate(panel = country_label(country_code))
   d_mac <- d_mac %>% filter(country_code %in% keep) %>% mutate(panel = country_label(country_code))
@@ -54,7 +57,7 @@ overlay <- function(issue, macro_var, macro_axis, flabel) {
   ggsave(out, p, width = 13, height = 8, dpi = 150); message("  -> ", out)
 }
 for (i in seq_len(nrow(ISSUE_MACRO))) with(ISSUE_MACRO[i, ],
-  overlay(issue, macro_var, macro_axis, focus_label[[issue]]))
+  overlay(issue, macro_var, macro_axis, focus_label[[issue]], monthly))
 
 # --- (b) correlation summary: Pearson + Spearman -----------------------------
 corr <- readr::read_csv(file.path(DIR_DATA, "correlations.csv"), show_col_types = FALSE) %>%

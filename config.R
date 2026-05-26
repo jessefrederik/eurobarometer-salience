@@ -72,13 +72,15 @@ issue_specs <- tribble(
 # should plausibly respond to. `unit`/`macro_axis` drive the dual-axis labels;
 # `expected_sign` is the hypothesised direction. `crime_per_100k` is built in the
 # analysis as homicide+robbery+burglary per 100k (the three series are annual).
+# `monthly` = the series is monthly (so the overlay shows a trailing 3-month
+# average); crime is annual, plotted as-is.
 ISSUE_MACRO <- tribble(
-  ~issue,                      ~macro_var,       ~macro_label,                  ~macro_axis,                          ~expected_sign,
-  "unemployment",              "unemp_rate",     "Unemployment rate",           "Unemployment rate (%)",              "+",
-  "inflation_cost_of_living",  "inflation_rate", "HICP inflation",              "HICP inflation (%)",                 "+",
-  "energy",                    "energy_rate",    "HICP energy inflation",       "HICP energy inflation (%)",          "+",
-  "immigration",               "asylum_rate",    "Asylum applications per 100k","Asylum applications (per 100k)",     "+",
-  "crime",                     "crime_per_100k", "Recorded crime per 100k",     "Recorded crime per 100k",            "+"
+  ~issue,                      ~macro_var,       ~macro_label,                  ~macro_axis,                          ~monthly, ~expected_sign,
+  "unemployment",              "unemp_rate",     "Unemployment rate",           "Unemployment rate (%)",              TRUE,     "+",
+  "inflation_cost_of_living",  "inflation_rate", "HICP inflation",              "HICP inflation (%)",                 TRUE,     "+",
+  "energy",                    "energy_rate",    "HICP energy inflation",       "HICP energy inflation (%)",          TRUE,     "+",
+  "immigration",               "asylum_rate",    "Asylum applications per 100k","Asylum applications (per 100k, 3-mo avg)", TRUE, "+",
+  "crime",                     "crime_per_100k", "Recorded crime per 100k",     "Recorded crime per 100k (annual)",   FALSE,    "+"
 )
 
 # Issues this analysis focuses on (descriptive + correlation). Salience side label
