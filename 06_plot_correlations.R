@@ -4,7 +4,8 @@
 #     and the real-world variable in its OWN units, on a dual axis (no z-scores,
 #     so magnitudes are preserved). Free per-panel scales keep each country
 #     readable; the secondary axis uses a single global transform.
-# (b) Correlation summary: Pearson (with 95% CI) and Spearman per pair.
+# (b) Correlation summary: within-country correlation (95% CI), West vs East,
+#     at both the trailing-3-month and annual resolution.
 # -----------------------------------------------------------------------------
 
 source("config.R"); source("R/utils.R")

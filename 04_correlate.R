@@ -5,13 +5,13 @@
 #   unemployment ~ unemployment rate | inflation ~ HICP | energy ~ HICP energy
 #   immigration ~ asylum applications | crime ~ recorded crime per 100k
 #
-# Correlations are computed at ANNUAL resolution (crime statistics are annual;
-# annualising the others keeps the five comparable) and WITHIN country, so they
-# describe over-time co-movement, not cross-country level differences. Methods:
-#   - Pearson correlation of per-country z-scores (95% CI)
-#   - Spearman (rank) correlation — robust to the skew/spikes in the rates
+# Correlations are WITHIN country (per-country z-scores, pooled) so they describe
+# over-time co-movement, not cross-country level differences. Computed at TWO
+# resolutions: wave-level (survey wave vs trailing-3-month indicator) and annual
+# (crime is annual-only). Methods:
+#   - within-country correlation of per-country z-scores (95% CI)
 #   - panel fixed-effects slope (country dummies, cluster-robust SE)
-# Output: data/correlations.csv
+# Output: data/correlations.csv (columns: resolution, region, issue, macro, method, ...)
 # -----------------------------------------------------------------------------
 
 source("config.R"); source("R/utils.R")
