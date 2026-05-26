@@ -72,6 +72,9 @@ into `data/external/` and running `R/build_frontex_csv.R`.
 Outputs land in `data/` (tidy tables: `salience_contexts.csv`, `correlations.csv`)
 and `output/` (figures).
 
+📄 **Write-up:** [Does immigration get more salient when migration rises?](docs/immigration_vs_migration.md)
+— the immigration-vs-real-world-migration analysis, with findings and caveats.
+
 ## Data sources & tiers
 
 | Source | Access | Coverage | Used for |
