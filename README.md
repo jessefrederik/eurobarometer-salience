@@ -50,6 +50,15 @@ route, so the UK isn't covered here.
 
 ![Frontex frontline](output/immigration_frontex_frontline.png)
 
+(Spain is extended back to 2002 with the Spanish Interior Ministry series, which
+matches Frontex on their overlap, annual r = 0.99. The boat-arrivals link is a
+*modern* phenomenon — r = 0.68 since 2009 but 0.27 since 2002, because early-2000s
+Spanish concern tracked the regular-migration boom, not boats.) Frontex publishes
+**no API for the historical series** — only the current month is queryable — so the
+committed monthly CSV is refreshed by downloading the workbook from the
+[Frontex migratory map](https://www.frontex.europa.eu/we-know/migratory-map/)
+into `data/external/` and running `R/build_frontex_csv.R`.
+
 ## What it produces
 
 | # | Deliverable | Stage |
