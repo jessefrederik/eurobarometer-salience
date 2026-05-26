@@ -33,20 +33,30 @@ overlay <- function(issue, macro_var, macro_axis, flabel, monthly) {
   d_mac <- d_mac %>% filter(country_code %in% keep) %>% mutate(panel = country_label(country_code))
   if (nrow(d_sal) == 0) return(invisible(NULL))
 
-  # global transform so macro*k sits on a comparable range to salience
-  k <- as.numeric(quantile(d_sal$pct, .98, na.rm = TRUE) / quantile(d_mac$mv, .98, na.rm = TRUE))
+  # per-country Pearson r (annual), shown in each facet
+  rlab <- inner_join(
+    d_sal %>% mutate(y = lubridate::year(date)) %>% group_by(panel, y) %>% summarise(pct = mean(pct), .groups = "drop"),
+    d_mac %>% mutate(y = lubridate::year(date)) %>% group_by(panel, y) %>% summarise(mv = mean(mv), .groups = "drop"),
+    by = c("panel", "y")) %>%
+    group_by(panel) %>% filter(n() >= 4) %>% summarise(lab = sprintf("r = %+.2f", cor(pct, mv)), .groups = "drop")
+  xpos <- min(c(d_sal$date, d_mac$date), na.rm = TRUE)
+
+  # affine transform: map the indicator's [min,max] onto salience's [min,max]
+  s <- range(d_sal$pct, na.rm = TRUE); m <- range(d_mac$mv, na.rm = TRUE)
+  a <- diff(s) / diff(m); b <- s[1] - a * m[1]
 
   p <- ggplot() +
-    geom_line(data = d_mac, aes(date, mv * k, colour = "Real-world indicator"), linewidth = 0.4, na.rm = TRUE) +
+    geom_line(data = d_mac, aes(date, a * mv + b, colour = "Real-world indicator"), linewidth = 0.4, na.rm = TRUE) +
     geom_line(data = d_sal, aes(date, pct, colour = "Problem perception (%)"), linewidth = 0.5, na.rm = TRUE) +
     geom_point(data = d_sal, aes(date, pct, colour = "Problem perception (%)"), size = 0.5, na.rm = TRUE) +
+    geom_text(data = rlab, aes(xpos, Inf, label = lab), hjust = 0, vjust = 1.4, size = 2.3, colour = "grey25") +
     facet_wrap(~ panel, ncol = 7, scales = "free_y") +
     scale_colour_manual(values = c("Problem perception (%)" = sal_col, "Real-world indicator" = macro_col)) +
     scale_y_continuous(name = paste0("% naming ", flabel, " the top issue"),
-                       sec.axis = sec_axis(~ . / k, name = macro_axis)) +
+                       sec.axis = sec_axis(~ (. - b) / a, name = macro_axis)) +
     scale_x_date(date_breaks = "8 years", date_labels = "%y") +
     labs(title = paste0(tools::toTitleCase(flabel), ": problem perception vs ", tolower(macro_axis)),
-         subtitle = "National-context salience (left, %) vs the real-world indicator in its own units (right). Per-panel scales.",
+         subtitle = "Salience (left, %) vs indicator (right, own units; both axes fit to min-max). r = within-country Pearson (annual).",
          x = NULL, colour = NULL,
          caption = "Sources: Eurobarometer QA3; Eurostat.") +
     theme_bw(base_size = 9) +
