@@ -76,3 +76,7 @@ strongly for the economy and weakly for immigration.
 - Crime data is annual and covers fewer country-years than the economic series.
 - National-context salience only; microdata + EC open volumes spliced at 2024
   (validated overlap r = 0.999); Cyprus excludes the Turkish-Cypriot Community sample.
+- **Data quality:** EB 65.3 (ZA4507, May 2006) is excluded — it used a non-standard
+  multi-select "important national issues" question (respondents picked ~3 issues vs
+  the standard 2), which inflated *every* issue's salience ~2–3× and produced a
+  spurious one-wave spike. It is the only such wave (all others verified consistent).

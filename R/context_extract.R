@@ -13,11 +13,16 @@
 # Classify a variable label into a context (or NA if not the MII battery).
 classify_context <- function(label) {
   l <- toupper(label)
-  if (!grepl("IMPORT.*ISSUE", l)) return(NA_character_)
+  # Require "import(ant) issues" ADJACENT — this is the standard "two most
+  # important issues" battery. It deliberately EXCLUDES "IMPORTANT NAT ISSUES"
+  # (the QD1 multi-select question in EB 65.3 / ZA4507, where respondents pick
+  # ~3 issues, inflating every issue's salience ~2-3x). See docs.
+  if (!grepl("IMPORT(ANT)?\\s+ISS", l)) return(NA_character_)
+  if (grepl("\\bNAT\\b", l)) return(NA_character_)   # belt-and-braces: drop "NAT ISSUES"
   if (grepl("TCC", l))      return("tcc")     # incl. CY-TCC subsample: drop
   if (grepl("\\bEU\\b", l)) return("eu")
   if (grepl("PERS", l))     return("pers")
-  return("cntry")                             # CNTRY / CTRY / NAT / bare
+  return("cntry")                             # CNTRY / CTRY / bare
 }
 
 # 0/1 recode: 1 = mentioned, else 0, NA preserved.
