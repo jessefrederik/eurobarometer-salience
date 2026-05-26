@@ -41,22 +41,28 @@ overlay <- function(issue, macro_var, macro_axis, flabel, monthly) {
     group_by(panel) %>% filter(n() >= 4) %>% summarise(lab = sprintf("r = %+.2f", cor(pct, mv)), .groups = "drop")
   xpos <- min(c(d_sal$date, d_mac$date), na.rm = TRUE)
 
-  # affine transform: map the indicator's [min,max] onto salience's [min,max]
-  s <- range(d_sal$pct, na.rm = TRUE); m <- range(d_mac$mv, na.rm = TRUE)
-  a <- diff(s) / diff(m); b <- s[1] - a * m[1]
+  # PER-COUNTRY min-max: rescale the indicator to each country's own salience
+  # [min,max] so both lines fill every panel (free axes). Per-country scaling
+  # means the right axis can't share numeric ticks, so it's labelled only.
+  scl <- d_sal %>% group_by(panel) %>% summarise(smin = min(pct), smax = max(pct), .groups = "drop") %>%
+    inner_join(d_mac %>% group_by(panel) %>% summarise(mmin = min(mv), mmax = max(mv), .groups = "drop"), by = "panel") %>%
+    filter(smax > smin, mmax > mmin) %>%
+    mutate(a = (smax - smin) / (mmax - mmin), b = smin - a * mmin)
+  d_mac <- d_mac %>% inner_join(scl %>% select(panel, a, b), by = "panel") %>% mutate(mv = a * mv + b)
 
   p <- ggplot() +
-    geom_line(data = d_mac, aes(date, a * mv + b, colour = "Real-world indicator"), linewidth = 0.4, na.rm = TRUE) +
+    geom_line(data = d_mac, aes(date, mv, colour = "Real-world indicator"), linewidth = 0.4, na.rm = TRUE) +
     geom_line(data = d_sal, aes(date, pct, colour = "Problem perception (%)"), linewidth = 0.5, na.rm = TRUE) +
     geom_point(data = d_sal, aes(date, pct, colour = "Problem perception (%)"), size = 0.5, na.rm = TRUE) +
     geom_text(data = rlab, aes(xpos, Inf, label = lab), hjust = 0, vjust = 1.4, size = 2.3, colour = "grey25") +
     facet_wrap(~ panel, ncol = 7, scales = "free_y") +
     scale_colour_manual(values = c("Problem perception (%)" = sal_col, "Real-world indicator" = macro_col)) +
     scale_y_continuous(name = paste0("% naming ", flabel, " the top issue"),
-                       sec.axis = sec_axis(~ (. - b) / a, name = macro_axis)) +
+                       sec.axis = dup_axis(name = paste0(macro_axis, " — min-max scaled per country"),
+                                           breaks = NULL, labels = NULL)) +
     scale_x_date(date_breaks = "8 years", date_labels = "%y") +
     labs(title = paste0(tools::toTitleCase(flabel), ": problem perception vs ", tolower(macro_axis)),
-         subtitle = "Salience (left, %) vs indicator (right, own units; both axes fit to min-max). r = within-country Pearson (annual).",
+         subtitle = "Per country (free axes): salience (%) and the indicator, each scaled to its own min-max. r = within-country Pearson (annual).",
          x = NULL, colour = NULL,
          caption = "Sources: Eurobarometer QA3; Eurostat.") +
     theme_bw(base_size = 9) +

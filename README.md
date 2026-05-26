@@ -41,8 +41,9 @@ spike rather than a steady relationship. Unemployment and crime are robust to it
 - `data/salience_contexts.csv` — salience by issue × country × wave × context
 - `data/correlations.csv` — within-country Pearson, Spearman, and panel-FE estimates
 - `output/correlation_summary.png` — the forest plot above
-- `output/overlay_<issue>.png` — per-country **dual-axis** time series: salience (%)
-  vs the real-world variable in its own units (no z-scores, so magnitudes are kept)
+- `output/overlay_<issue>.png` — per-country overlays: salience (%) and the
+  real-world indicator, each **min–max scaled to its own range** so co-movement is
+  visible in every country (free axes); each facet labelled with its Pearson r
 - `output/descriptive_<issue>.png` — salience over time, three question contexts
 
 ![Unemployment overlay](output/overlay_unemployment.png)

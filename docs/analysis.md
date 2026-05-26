@@ -23,8 +23,9 @@ Correlations are **within country** (per-country z-scores, pooled, so they descr
 over-time co-movement rather than cross-country level differences) and at **annual**
 resolution, because crime statistics are annual and this keeps the five comparable.
 We report **Pearson** (with 95% CI), **Spearman** (rank — robust to the skewed,
-spiky rates), and a panel fixed-effects slope. Time-series overlays use **real units
-on a dual axis** rather than z-scores, so magnitudes stay visible.
+spiky rates), and a panel fixed-effects slope. Time-series overlays show salience (%)
+and the indicator **each min–max scaled to its own range, per country** (free axes),
+so co-movement is visible in every country; each facet is labelled with its Pearson r.
 
 ## Findings
 
