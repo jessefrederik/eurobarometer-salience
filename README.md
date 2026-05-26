@@ -29,16 +29,16 @@ Perception tracks **economic** conditions closely and **immigration** loosely:
 | Unemployment ~ unemployment rate | 0.78 | 0.78 |
 | Inflation ~ HICP inflation | 0.72 | 0.62 |
 | Crime ~ recorded crime | 0.51 | 0.53 |
-| Energy ~ HICP energy inflation | 0.49 | **0.24** |
-| Immigration ~ asylum applications | 0.26 | 0.30 |
+| Energy ~ HICP energy inflation | 0.56 | **0.31** |
+| Immigration ~ asylum applications | 0.35 | 0.32 |
 
 Adding **Spearman** alongside Pearson matters: the energy link nearly halves under
-rank correlation (0.49 → 0.24), revealing it is driven by the single 2022 energy-price
+rank correlation (0.56 → 0.31), revealing it is driven by the single 2022 energy-price
 spike rather than a steady relationship. Unemployment and crime are robust to it.
 
 **West vs East:** economic problems track reality *as well or better* in Central &
-Eastern Europe (unemployment 0.93 East vs 0.69 West; crime 0.60 vs 0.44) — but
-**immigration is the mirror image**: 0.38 in the West vs **0.12** in the East, where
+Eastern Europe (unemployment 0.91 East vs 0.69 West; crime 0.60 vs 0.44) — but
+**immigration is the mirror image**: 0.47 in the West vs **0.16** in the East, where
 concern is largely decoupled from actual asylum flows and driven by politics instead.
 
 ## What it produces
@@ -94,8 +94,10 @@ Stages:
 
 ## Method notes
 
-- Correlations are **within-country** (per-country z-scores, pooled) at **annual**
-  resolution (crime statistics are annual; annualising keeps the five comparable).
+- Correlations are **within-country** (per-country z-scores, pooled). For the four
+  monthly indicators each survey wave is matched to the **trailing 3-month average**
+  of the indicator (the survey month + the two before); crime is annual (published
+  yearly), so it uses annual means.
 - **Pearson and Spearman** are both reported — Spearman is the honest robustness
   check against the right-skewed rates (energy especially).
 - Overlays use **real units on a dual axis**, not z-scores, so magnitudes are visible.

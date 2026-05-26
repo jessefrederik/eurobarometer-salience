@@ -33,12 +33,20 @@ overlay <- function(issue, macro_var, macro_axis, flabel, monthly) {
   d_mac <- d_mac %>% filter(country_code %in% keep) %>% mutate(panel = country_label(country_code))
   if (nrow(d_sal) == 0) return(invisible(NULL))
 
-  # per-country Pearson r (annual), shown in each facet
-  rlab <- inner_join(
-    d_sal %>% mutate(y = lubridate::year(date)) %>% group_by(panel, y) %>% summarise(pct = mean(pct), .groups = "drop"),
-    d_mac %>% mutate(y = lubridate::year(date)) %>% group_by(panel, y) %>% summarise(mv = mean(mv), .groups = "drop"),
-    by = c("panel", "y")) %>%
-    group_by(panel) %>% filter(n() >= 4) %>% summarise(lab = sprintf("r = %+.2f", cor(pct, mv)), .groups = "drop")
+  # per-country Pearson r shown in each facet — computed the same way as stage 04:
+  # wave-level (salience month vs trailing-3-mo indicator) for monthly indicators,
+  # annual for crime. d_mac$mv is still real units here (rescaled further below).
+  if (monthly) {
+    rlab <- inner_join(d_sal, d_mac %>% select(panel, date, mv), by = c("panel", "date")) %>%
+      group_by(panel) %>% filter(n() >= 4) %>%
+      summarise(lab = sprintf("r = %+.2f", cor(pct, mv)), .groups = "drop")
+  } else {
+    rlab <- inner_join(
+      d_sal %>% mutate(y = lubridate::year(date)) %>% group_by(panel, y) %>% summarise(pct = mean(pct), .groups = "drop"),
+      d_mac %>% mutate(y = lubridate::year(date)) %>% group_by(panel, y) %>% summarise(mv = mean(mv), .groups = "drop"),
+      by = c("panel", "y")) %>%
+      group_by(panel) %>% filter(n() >= 4) %>% summarise(lab = sprintf("r = %+.2f", cor(pct, mv)), .groups = "drop")
+  }
   xpos <- min(c(d_sal$date, d_mac$date), na.rm = TRUE)
 
   # PER-COUNTRY min-max: rescale the indicator to each country's own salience
