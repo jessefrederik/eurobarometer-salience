@@ -30,6 +30,16 @@ largely decoupled from local arrivals (r ≈ 0.2).
 
 ![East vs West](output/immigration_eastwest_vs_asylum.png)
 
+For two countries the EU-wide asylum figures miss the relevant signal, so the
+pipeline adds national sources: **Spain's** irregular (largely maritime) arrivals
+and the **UK's** asylum claims (the UK is absent from Eurostat post-Brexit).
+Tellingly, neither tracks salience closely — Spain's record 2018/2023–24 arrivals
+barely moved concern (r ≈ 0.1), and UK concern peaked in the Brexit/EU-free-movement
+years when asylum claims were *low* (r ≈ −0.4). Perceived immigration ≠ asylum/boat
+arrivals.
+
+![Spain & UK](output/immigration_spain_uk_arrivals.png)
+
 ## What it produces
 
 | # | Deliverable | Stage |
