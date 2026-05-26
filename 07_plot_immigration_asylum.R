@@ -25,13 +25,14 @@ asyl <- get_eurostat("migr_asyappctzm",
   mutate(date = as.Date(date)) %>%
   select(country_code, date, applications = values)
 
+# 6-month rolling mean to de-noise the monthly asylum series.
+smooth6 <- function(x) slider::slide_dbl(x, mean, .before = 5, .complete = TRUE)
+
 asyl_country <- asyl %>% filter(country_code %in% setdiff(EU_SET, c("EU", "UK"))) %>%
   arrange(country_code, date) %>% group_by(country_code) %>%
-  mutate(applications = slider::slide_dbl(applications, mean, .before = 2, .complete = TRUE)) %>%
-  ungroup()   # 3-month rolling mean to de-noise the monthly series
+  mutate(applications = smooth6(applications)) %>% ungroup()
 asyl_eu      <- asyl %>% filter(country_code == "EU27_2020") %>%
-  arrange(date) %>%
-  mutate(applications_3m = slider::slide_dbl(applications, mean, .before = 2, .complete = TRUE))
+  arrange(date) %>% mutate(applications = smooth6(applications))
 
 # =============================================================================
 # (1) NATIONAL: salience (country context) vs national asylum applications
@@ -94,7 +95,7 @@ p2 <- ggplot() +
   scale_colour_manual(values = c("Immigration = EU problem (%)" = survey_col,
                                  "Total EU asylum applications" = asyl_col)) +
   scale_y_continuous(name = "% of EU citizens naming immigration\nthe most important issue facing the EU",
-                     sec.axis = sec_axis(~ . / k, name = "Total EU first-time asylum applications (monthly)",
+                     sec.axis = sec_axis(~ . / k, name = "Total EU first-time asylum applications (6-month average)",
                                          labels = scales::comma)) +
   scale_x_date(date_breaks = "3 years", date_labels = "%Y") +
   labs(title = "Immigration as an EU-wide problem vs total EU asylum applications",
