@@ -17,6 +17,12 @@ Red = facing your country, blue = facing the EU, black = facing you personally.*
 
 ![Do real-world conditions track perceptions?](output/correlation_summary.png)
 
+Perception and reality can also **decouple**: EU-wide concern about immigration
+tracked asylum applications closely during the 2015–16 crisis, then diverged
+(concern stayed high as flows fell; the 2022–24 asylum resurgence did not revive it).
+
+![Immigration as an EU problem vs total EU asylum applications](output/immigration_eu_vs_total_asylum.png)
+
 ## What it produces
 
 | # | Deliverable | Stage |

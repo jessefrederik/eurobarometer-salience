@@ -20,7 +20,8 @@ stages <- c(
   "03" = "03_build_macro.R",
   "04" = "04_correlate.R",
   "05" = "05_plot_descriptive.R",
-  "06" = "06_plot_correlations.R"
+  "06" = "06_plot_correlations.R",
+  "07" = "07_plot_immigration_asylum.R"
 )
 
 skip <- strsplit(Sys.getenv("SKIP", ""), "\\s+")[[1]]
