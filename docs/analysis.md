@@ -60,6 +60,14 @@ flows recede, and rises for reasons unrelated to local arrivals.
 **4. Crime tracks moderately** (≈0.52, robust across both measures), though crime
 statistics are annual and sparser than the monthly economic series.
 
+**5. West vs East diverge only on immigration.** Splitting the sample, economic
+problems track reality *as well or better* in Central & Eastern Europe than in the
+West (unemployment 0.93 vs 0.69; crime 0.60 vs 0.44; inflation 0.72 in both). The
+single exception is **immigration**: 0.38 in the West but only **0.12** in the East
+(CI nearly touching zero) — Eastern concern about immigration is largely decoupled
+from actual asylum arrivals and driven by politics, a pattern absent for the
+economic issues.
+
 ## Takeaway
 
 Problem perception is **tightly coupled to economic conditions** (unemployment,

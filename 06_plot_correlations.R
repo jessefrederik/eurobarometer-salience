@@ -75,24 +75,29 @@ overlay <- function(issue, macro_var, macro_axis, flabel, monthly) {
 for (i in seq_len(nrow(ISSUE_MACRO))) with(ISSUE_MACRO[i, ],
   overlay(issue, macro_var, macro_axis, focus_label[[issue]], monthly))
 
-# --- (b) correlation summary: Pearson + Spearman -----------------------------
-corr <- readr::read_csv(file.path(DIR_DATA, "correlations.csv"), show_col_types = FALSE) %>%
-  filter(method %in% c("within_country_pearson", "within_country_spearman")) %>%
-  mutate(Method = ifelse(method == "within_country_pearson", "Pearson", "Spearman"))
-
-ord <- corr %>% filter(Method == "Pearson") %>% arrange(estimate) %>% pull(macro_label)
-corr <- corr %>% mutate(lab = factor(macro_label, levels = ord))
+# --- (b) correlation summary: West vs East (Pearson + Spearman) --------------
+allc <- readr::read_csv(file.path(DIR_DATA, "correlations.csv"), show_col_types = FALSE)
+ord  <- allc %>% filter(method == "within_country_pearson", region == "All Europe") %>%
+  arrange(estimate) %>% pull(macro_label)
+corr <- allc %>%
+  filter(method %in% c("within_country_pearson", "within_country_spearman"),
+         region %in% c("Western Europe", "Central & Eastern Europe")) %>%
+  mutate(Method = ifelse(method == "within_country_pearson", "Pearson", "Spearman"),
+         lab = factor(macro_label, levels = ord),
+         region = factor(region, levels = c("Western Europe", "Central & Eastern Europe")))
 
 p2 <- ggplot(corr, aes(estimate, lab, colour = Method, shape = Method)) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
   geom_errorbarh(aes(xmin = ci_low, xmax = ci_high), height = 0.2, na.rm = TRUE,
                  position = position_dodge(width = 0.4)) +
-  geom_point(size = 3, position = position_dodge(width = 0.4)) +
+  geom_point(size = 2.6, position = position_dodge(width = 0.4)) +
+  facet_wrap(~ region) +
   scale_colour_manual(values = c(Pearson = sal_col, Spearman = macro_col)) +
-  labs(title = "Does problem perception track real-world conditions?",
+  labs(title = "Does problem perception track real-world conditions? West vs East",
        subtitle = "Within-country correlation of national salience with each real-world variable (Pearson 95% CI; Spearman = rank, robust)",
        x = "Correlation", y = NULL, colour = NULL, shape = NULL,
-       caption = "Sources: Eurobarometer + Eurostat. Within-country (per-country z-scores), pooled.") +
-  theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), legend.position = "top")
-ggsave(file.path(DIR_OUTPUT, "correlation_summary.png"), p2, width = 10, height = 5, dpi = 150)
+       caption = "Sources: Eurobarometer + Eurostat. Within-country (per-country z-scores), pooled. East = post-communist CEE members.") +
+  theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), legend.position = "top",
+                                   strip.text = element_text(face = "bold"))
+ggsave(file.path(DIR_OUTPUT, "correlation_summary.png"), p2, width = 12, height = 5, dpi = 150)
 message("  -> ", file.path(DIR_OUTPUT, "correlation_summary.png"))

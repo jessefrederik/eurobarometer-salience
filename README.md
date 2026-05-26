@@ -16,7 +16,7 @@ It harmonises ~70 Eurobarometer waves (2002–2026) into a respondent-level data
 extracts each issue's salience, pulls the matching Eurostat series, and reports the
 within-country correlation between perception and reality.
 
-![Does perception track conditions?](output/correlation_summary.png)
+![Does perception track conditions? West vs East](output/correlation_summary.png)
 
 📄 **Write-up:** [How closely does problem perception track reality?](docs/analysis.md)
 
@@ -35,6 +35,11 @@ Perception tracks **economic** conditions closely and **immigration** loosely:
 Adding **Spearman** alongside Pearson matters: the energy link nearly halves under
 rank correlation (0.49 → 0.24), revealing it is driven by the single 2022 energy-price
 spike rather than a steady relationship. Unemployment and crime are robust to it.
+
+**West vs East:** economic problems track reality *as well or better* in Central &
+Eastern Europe (unemployment 0.93 East vs 0.69 West; crime 0.60 vs 0.44) — but
+**immigration is the mirror image**: 0.38 in the West vs **0.12** in the East, where
+concern is largely decoupled from actual asylum flows and driven by politics instead.
 
 ## What it produces
 
