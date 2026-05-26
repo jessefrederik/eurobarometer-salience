@@ -1,0 +1,32 @@
+# Data (microdata is licence-restricted and large; everything in data/ is derived
+# or downloaded at runtime, except the small committed reference files).
+data/*
+!data/reference/
+!data/reference/**
+
+# Restricted / large microdata — never commit
+*.rds
+*.sav
+*.dta
+*.parquet
+
+# Downloaded EC volumes and optional manual files
+data/ec_volumes/
+data/external/
+
+# Figures/tables are regenerated; a curated few are force-added (see README)
+output/*
+!output/.gitkeep
+
+# R / RStudio / renv
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+renv/cellar/
+renv/sandbox/
+renv/python/
+.DS_Store
+Rplots.pdf
