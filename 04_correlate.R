@@ -72,11 +72,8 @@ for (i in seq_len(nrow(ISSUE_MACRO))) {
     nc <- n_distinct(z$country_code)
 
     ctp <- tryCatch(cor.test(z$zp, z$zm), error = function(e) NULL)
-    rs  <- suppressWarnings(cor(z$zp, z$zm, method = "spearman"))
     if (!is.null(ctp)) add(region = rg, issue = m$issue, macro = m$macro_var, method = "within_country_pearson",
         estimate = unname(ctp$estimate), ci_low = ctp$conf.int[1], ci_high = ctp$conf.int[2], n = nrow(z), nc = nc)
-    add(region = rg, issue = m$issue, macro = m$macro_var, method = "within_country_spearman",
-        estimate = rs, ci_low = NA_real_, ci_high = NA_real_, n = nrow(z), nc = nc)
 
     if (rg == "All Europe") {
       fe <- tryCatch({

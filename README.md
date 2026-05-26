@@ -24,17 +24,16 @@ within-country correlation between perception and reality.
 
 Perception tracks **economic** conditions closely and **immigration** loosely:
 
-| Perception ~ real-world variable | Pearson | Spearman (robust) |
-|---|---|---|
-| Unemployment ~ unemployment rate | 0.78 | 0.78 |
-| Inflation ~ HICP inflation | 0.72 | 0.62 |
-| Crime ~ recorded crime | 0.51 | 0.53 |
-| Energy ~ HICP energy inflation | 0.56 | **0.31** |
-| Immigration ~ asylum applications | 0.35 | 0.32 |
+| Perception ~ real-world variable | Within-country correlation |
+|---|---|
+| Unemployment ~ unemployment rate | 0.78 |
+| Inflation ~ HICP inflation | 0.72 |
+| Energy ~ HICP energy inflation | 0.56 |
+| Crime ~ recorded crime | 0.51 |
+| Immigration ~ asylum applications | 0.35 |
 
-Adding **Spearman** alongside Pearson matters: the energy link nearly halves under
-rank correlation (0.56 → 0.31), revealing it is driven by the single 2022 energy-price
-spike rather than a steady relationship. Unemployment and crime are robust to it.
+The energy figure is the least robust — it leans heavily on the single 2022
+energy-price spike rather than a steady relationship.
 
 **West vs East:** economic problems track reality *as well or better* in Central &
 Eastern Europe (unemployment 0.91 East vs 0.69 West; crime 0.60 vs 0.44) — but
@@ -98,9 +97,8 @@ Stages:
   monthly indicators each survey wave is matched to the **trailing 3-month average**
   of the indicator (the survey month + the two before); crime is annual (published
   yearly), so it uses annual means.
-- **Pearson and Spearman** are both reported — Spearman is the honest robustness
-  check against the right-skewed rates (energy especially).
-- Overlays use **real units on a dual axis**, not z-scores, so magnitudes are visible.
+- Overlays show salience and the indicator **min–max scaled per country** (free
+  axes), so co-movement is visible in every country; each facet is labelled with r.
 
 ## Caveats
 
