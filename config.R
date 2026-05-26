@@ -29,6 +29,16 @@ EU_SET <- c("AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","EL","HU",
             "IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES",
             "SE","UK","EU")
 
+# East/West split. EAST = the post-communist Central & Eastern European members;
+# WEST = everything else (incl. the Mediterranean members CY/MT/EL/ES/IT/PT).
+EAST_EU <- c("BG","HR","CZ","EE","HU","LV","LT","PL","RO","SK","SI")
+WEST_EU <- setdiff(EU_SET, c("EU", EAST_EU))
+region_of <- function(cc) dplyr::case_when(
+  cc %in% EAST_EU ~ "Central & Eastern Europe",
+  cc %in% WEST_EU ~ "Western Europe",
+  TRUE ~ NA_character_
+)
+
 # --- Issue specifications -----------------------------------------------------
 # One row per issue we extract from the "most important issues" battery. `include`
 # is a (case-insensitive) regex matched against the variable LABEL; `exclude`

@@ -25,14 +25,14 @@ asyl <- get_eurostat("migr_asyappctzm",
   mutate(date = as.Date(date)) %>%
   select(country_code, date, applications = values)
 
-# 6-month rolling mean to de-noise the monthly asylum series.
-smooth6 <- function(x) slider::slide_dbl(x, mean, .before = 5, .complete = TRUE)
+# Trailing 3-month rolling mean to de-noise the monthly asylum series.
+smooth3 <- function(x) slider::slide_dbl(x, mean, .before = 2, .complete = TRUE)
 
 asyl_country <- asyl %>% filter(country_code %in% setdiff(EU_SET, c("EU", "UK"))) %>%
   arrange(country_code, date) %>% group_by(country_code) %>%
-  mutate(applications = smooth6(applications)) %>% ungroup()
+  mutate(applications = smooth3(applications)) %>% ungroup()
 asyl_eu      <- asyl %>% filter(country_code == "EU27_2020") %>%
-  arrange(date) %>% mutate(applications = smooth6(applications))
+  arrange(date) %>% mutate(applications = smooth3(applications))
 
 # =============================================================================
 # (1) NATIONAL: salience (country context) vs national asylum applications
@@ -95,7 +95,7 @@ p2 <- ggplot() +
   scale_colour_manual(values = c("Immigration = EU problem (%)" = survey_col,
                                  "Total EU asylum applications" = asyl_col)) +
   scale_y_continuous(name = "% of EU citizens naming immigration\nthe most important issue facing the EU",
-                     sec.axis = sec_axis(~ . / k, name = "Total EU first-time asylum applications (6-month average)",
+                     sec.axis = sec_axis(~ . / k, name = "Total EU first-time asylum applications (3-month average)",
                                          labels = scales::comma)) +
   scale_x_date(date_breaks = "3 years", date_labels = "%Y") +
   labs(title = "Immigration as an EU-wide problem vs total EU asylum applications",
@@ -110,3 +110,59 @@ ggsave(file.path(DIR_OUTPUT, "immigration_eu_vs_total_asylum.png"), p2,
        width = 10, height = 6, dpi = 150)
 message("  -> output/immigration_eu_vs_total_asylum.png  (r = ",
         ifelse(is.na(r), "NA", round(r, 2)), ", n = ", nrow(joined), ")")
+
+# =============================================================================
+# (3) EAST vs WEST: regional immigration-as-EU-problem vs regional asylum
+# =============================================================================
+# Regional salience by POOLING RESPONDENTS (eu27 weight), exactly like the EU
+# panel but split by region — avoids the date-fragmentation of averaging
+# per-country percentages. Uses the microdata respondent extraction (2011-2024).
+scaffold <- readRDS(file.path(DIR_DATA, "scaffold.rds"))
+ctx_raw  <- readRDS(file.path(DIR_DATA, "contexts_raw.rds"))
+reg_sal <- ctx_raw %>%
+  filter(issue == "immigration", context == "eu") %>%
+  inner_join(scaffold, by = c("study", "id")) %>%
+  filter(!is.na(value), !is.na(date), country_code %in% c(EAST_EU, WEST_EU)) %>%
+  mutate(region = region_of(country_code), w = coalesce(weight_eu27, weight)) %>%
+  group_by(region, date) %>%
+  summarise(pct = 100 * weighted.mean(value, w, na.rm = TRUE), n = n(), .groups = "drop") %>%
+  filter(n >= 100)
+
+# Regional total asylum applications (sum of member counts, trailing 3-month).
+reg_asyl <- asyl %>%
+  filter(country_code %in% c(EAST_EU, WEST_EU)) %>%
+  mutate(region = region_of(country_code)) %>%
+  group_by(region, date) %>%
+  summarise(applications = sum(applications, na.rm = TRUE), .groups = "drop") %>%
+  arrange(region, date) %>% group_by(region) %>%
+  mutate(applications = smooth3(applications)) %>% ungroup()
+
+reg_r <- reg_sal %>% inner_join(reg_asyl, by = c("region", "date")) %>%
+  filter(!is.na(pct), !is.na(applications)) %>%
+  group_by(region) %>% summarise(r = cor(pct, applications), n = n(), .groups = "drop")
+message("East/West correlations:"); print(reg_r)
+
+reg_long <- bind_rows(
+  reg_sal  %>% transmute(region, date, value = pct,          series = "Immigration = EU problem (%)"),
+  reg_asyl %>% transmute(region, date, value = applications, series = "Asylum applications")
+) %>% group_by(region, series) %>% mutate(z = zscore(value)) %>% ungroup() %>%
+  left_join(reg_r %>% mutate(lab = sprintf("%s  (r = %+.2f)", region, r)) %>% select(region, lab),
+            by = "region")
+
+p3 <- ggplot(reg_long, aes(date, z, colour = series)) +
+  geom_line(linewidth = 0.7, na.rm = TRUE) +
+  facet_wrap(~ lab, ncol = 1) +
+  scale_colour_manual(values = c("Immigration = EU problem (%)" = survey_col,
+                                 "Asylum applications" = asyl_col)) +
+  scale_x_date(date_breaks = "3 years", date_labels = "%Y") +
+  labs(title = "Immigration as an EU problem vs asylum applications: East vs West",
+       subtitle = "Per-region z-scores. Salience = population-weighted % naming immigration the top EU issue; asylum = regional total (trailing 3-mo)",
+       x = NULL, y = "z-score", colour = NULL,
+       caption = "Sources: Eurobarometer QA5 ('facing the EU'); Eurostat migr_asyappctzm. East = post-communist CEE members.") +
+  theme_bw(base_size = 10) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold"))
+
+ggsave(file.path(DIR_OUTPUT, "immigration_eastwest_vs_asylum.png"), p3,
+       width = 10, height = 7, dpi = 150)
+message("  -> output/immigration_eastwest_vs_asylum.png")

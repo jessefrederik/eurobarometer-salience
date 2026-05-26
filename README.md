@@ -23,6 +23,13 @@ tracked asylum applications closely during the 2015–16 crisis, then diverged
 
 ![Immigration as an EU problem vs total EU asylum applications](output/immigration_eu_vs_total_asylum.png)
 
+The coupling also splits sharply East vs West: in **Western Europe** concern tracks
+the asylum flows the region actually receives (r ≈ 0.6), while in **Central &
+Eastern Europe** a brief 2015 transit spike gave way to lasting concern that is
+largely decoupled from local arrivals (r ≈ 0.2).
+
+![East vs West](output/immigration_eastwest_vs_asylum.png)
+
 ## What it produces
 
 | # | Deliverable | Stage |
