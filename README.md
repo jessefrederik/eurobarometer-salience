@@ -40,6 +40,16 @@ arrivals.
 
 ![Spain & UK](output/immigration_spain_uk_arrivals.png)
 
+**Frontex** detections of irregular border crossings (by route, monthly) are the
+media-salient arrivals measure, and they track perceptions more tightly than
+asylum applications do: EU-wide r ≈ 0.49 (vs 0.39 for asylum apps), and among
+frontline countries Spain ≈ 0.68 (Western African + W. Mediterranean routes),
+Italy ≈ 0.40 (Central Med), Greece ≈ 0.18 (Eastern Med — the huge 2015 spike with
+almost no salience response, the debt crisis dominating). Frontex has no Channel
+route, so the UK isn't covered here.
+
+![Frontex frontline](output/immigration_frontex_frontline.png)
+
 ## What it produces
 
 | # | Deliverable | Stage |

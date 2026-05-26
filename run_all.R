@@ -22,7 +22,8 @@ stages <- c(
   "05" = "05_plot_descriptive.R",
   "06" = "06_plot_correlations.R",
   "07" = "07_plot_immigration_asylum.R",
-  "08" = "08_plot_spain_uk_arrivals.R"
+  "08" = "08_plot_spain_uk_arrivals.R",
+  "09" = "09_plot_frontex_arrivals.R"
 )
 
 skip <- strsplit(Sys.getenv("SKIP", ""), "\\s+")[[1]]
