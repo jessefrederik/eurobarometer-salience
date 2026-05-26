@@ -24,13 +24,18 @@ within-country correlation between perception and reality.
 
 Perception tracks **economic** conditions closely and **immigration** loosely:
 
-| Perception ~ real-world variable | Within-country correlation |
-|---|---|
-| Unemployment ~ unemployment rate | 0.78 |
-| Inflation ~ HICP inflation | 0.72 |
-| Energy ~ HICP energy inflation | 0.56 |
-| Crime ~ recorded crime | 0.51 |
-| Immigration ~ asylum applications | 0.35 |
+| Perception ~ real-world variable | Trailing 3-mo | Annual |
+|---|---|---|
+| Unemployment ~ unemployment rate | 0.78 | 0.78 |
+| Inflation ~ HICP inflation | 0.72 | 0.72 |
+| Energy ~ HICP energy inflation | 0.56 | 0.48 |
+| Crime ~ recorded crime | — | 0.51 |
+| Immigration ~ asylum applications | 0.35 | 0.28 |
+
+Within-country correlations are reported at two resolutions: matching each survey
+wave to the **trailing 3-month** average of the indicator, and **annual** means
+(crime is published only annually, so it has no monthly version). The two agree
+closely; the 3-month version is slightly higher for the monthly indicators.
 
 The energy figure is the least robust — it leans heavily on the single 2022
 energy-price spike rather than a steady relationship.
@@ -43,7 +48,8 @@ concern is largely decoupled from actual asylum flows and driven by politics ins
 ## What it produces
 
 - `data/salience_contexts.csv` — salience by issue × country × wave × context
-- `data/correlations.csv` — within-country Pearson, Spearman, and panel-FE estimates
+- `data/correlations.csv` — within-country correlation + panel-FE estimates, by
+  region (All / West / East) and resolution (trailing-3-month / annual)
 - `output/correlation_summary.png` — the forest plot above
 - `output/overlay_<issue>.png` — per-country overlays: salience (%) and the
   real-world indicator, each **min–max scaled to its own range** so co-movement is
@@ -86,17 +92,17 @@ Stages:
 01_build_micro.R              harmonise GESIS waves -> core_micro
 02_build_contexts.R           issue × context salience -> data/salience_contexts.csv
 03_build_macro.R              Eurostat -> data/core_macro.rds
-04_correlate.R                within-country Pearson + Spearman + panel FE
+04_correlate.R                within-country correlation + panel FE (3-mo & annual)
 05_plot_descriptive.R         salience over time, per issue
 06_plot_correlations.R        dual-axis overlays + correlation summary
 ```
 
 ## Method notes
 
-- Correlations are **within-country** (per-country z-scores, pooled). For the four
-  monthly indicators each survey wave is matched to the **trailing 3-month average**
-  of the indicator (the survey month + the two before); crime is annual (published
-  yearly), so it uses annual means.
+- Correlations are **within-country** (per-country z-scores, pooled), computed at
+  two resolutions: each survey wave matched to the **trailing 3-month average** of
+  the indicator, and **annual** means. Crime is published only annually (no monthly
+  version). The two resolutions agree closely.
 - Overlays show salience and the indicator **min–max scaled per country** (free
   axes), so co-movement is visible in every country; each facet is labelled with r.
 

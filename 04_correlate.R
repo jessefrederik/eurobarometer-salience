@@ -50,39 +50,44 @@ regions <- list("All Europe"               = setdiff(EU_SET, "EU"),
                 "Western Europe"           = WEST_EU,
                 "Central & Eastern Europe" = EAST_EU)
 
-for (i in seq_len(nrow(ISSUE_MACRO))) {
-  m <- ISSUE_MACRO[i, ]
-  if (m$monthly) {
-    # wave-level: salience at each survey month vs trailing 3-month indicator
-    dat0 <- sal_wave %>% filter(issue == m$issue) %>% select(country_code, date, pct) %>%
-      inner_join(macro %>% select(country_code, date, mv = all_of(paste0(m$macro_var, "_3m"))),
-                 by = c("country_code", "date")) %>% filter(is.finite(pct), is.finite(mv))
-  } else {
-    # crime: annual
-    dat0 <- sal_ann %>% filter(issue == m$issue) %>% select(country_code, year, pct) %>%
-      inner_join(macro_ann %>% select(country_code, year, mv = all_of(m$macro_var)),
-                 by = c("country_code", "year")) %>% filter(is.finite(pct), is.finite(mv))
-  }
+# Two resolutions: "wave_3m" (each survey wave vs trailing-3-month indicator) and
+# "annual" (annual means of both). Crime is annual-only (no monthly series).
+for (resolution in c("wave_3m", "annual")) {
+  for (i in seq_len(nrow(ISSUE_MACRO))) {
+    m <- ISSUE_MACRO[i, ]
+    if (resolution == "wave_3m" && !m$monthly) next
+    if (resolution == "wave_3m") {
+      dat0 <- sal_wave %>% filter(issue == m$issue) %>% select(country_code, date, pct) %>%
+        inner_join(macro %>% select(country_code, date, mv = all_of(paste0(m$macro_var, "_3m"))),
+                   by = c("country_code", "date")) %>% filter(is.finite(pct), is.finite(mv))
+    } else {
+      dat0 <- sal_ann %>% filter(issue == m$issue) %>% select(country_code, year, pct) %>%
+        inner_join(macro_ann %>% select(country_code, year, mv = all_of(m$macro_var)),
+                   by = c("country_code", "year")) %>% filter(is.finite(pct), is.finite(mv))
+    }
 
-  for (rg in names(regions)) {
-    dat <- dat0 %>% filter(country_code %in% regions[[rg]])
-    z <- dat %>% group_by(country_code) %>% filter(n() >= 4) %>%
-      mutate(zp = zscore(pct), zm = zscore(mv)) %>% ungroup() %>% filter(is.finite(zp), is.finite(zm))
-    if (nrow(z) < 10) next
-    nc <- n_distinct(z$country_code)
+    for (rg in names(regions)) {
+      dat <- dat0 %>% filter(country_code %in% regions[[rg]])
+      z <- dat %>% group_by(country_code) %>% filter(n() >= 4) %>%
+        mutate(zp = zscore(pct), zm = zscore(mv)) %>% ungroup() %>% filter(is.finite(zp), is.finite(zm))
+      if (nrow(z) < 10) next
+      nc <- n_distinct(z$country_code)
 
-    ctp <- tryCatch(cor.test(z$zp, z$zm), error = function(e) NULL)
-    if (!is.null(ctp)) add(region = rg, issue = m$issue, macro = m$macro_var, method = "within_country_pearson",
-        estimate = unname(ctp$estimate), ci_low = ctp$conf.int[1], ci_high = ctp$conf.int[2], n = nrow(z), nc = nc)
+      ctp <- tryCatch(cor.test(z$zp, z$zm), error = function(e) NULL)
+      if (!is.null(ctp)) add(resolution = resolution, region = rg, issue = m$issue, macro = m$macro_var,
+          method = "within_country_pearson", estimate = unname(ctp$estimate),
+          ci_low = ctp$conf.int[1], ci_high = ctp$conf.int[2], n = nrow(z), nc = nc)
 
-    if (rg == "All Europe") {
-      fe <- tryCatch({
-        fit <- lm(pct ~ mv + factor(country_code), data = dat)
-        coeftest(fit, vcov = vcovCL(fit, cluster = ~ country_code))["mv", ]
-      }, error = function(e) NULL)
-      if (!is.null(fe)) add(region = rg, issue = m$issue, macro = m$macro_var, method = "panel_fe_levels",
-          estimate = fe["Estimate"], ci_low = fe["Estimate"] - 1.96 * fe["Std. Error"],
-          ci_high = fe["Estimate"] + 1.96 * fe["Std. Error"], n = nrow(dat), nc = n_distinct(dat$country_code))
+      if (rg == "All Europe") {
+        fe <- tryCatch({
+          fit <- lm(pct ~ mv + factor(country_code), data = dat)
+          coeftest(fit, vcov = vcovCL(fit, cluster = ~ country_code))["mv", ]
+        }, error = function(e) NULL)
+        if (!is.null(fe)) add(resolution = resolution, region = rg, issue = m$issue, macro = m$macro_var,
+            method = "panel_fe_levels", estimate = fe["Estimate"],
+            ci_low = fe["Estimate"] - 1.96 * fe["Std. Error"], ci_high = fe["Estimate"] + 1.96 * fe["Std. Error"],
+            n = nrow(dat), nc = n_distinct(dat$country_code))
+      }
     }
   }
 }
@@ -91,6 +96,6 @@ correlations <- bind_rows(results) %>%
   left_join(ISSUE_MACRO %>% select(issue, macro = macro_var, macro_label), by = c("issue", "macro"))
 readr::write_csv(correlations, file.path(DIR_DATA, "correlations.csv"))
 message("Wrote data/correlations.csv (", nrow(correlations), " rows)")
-print(correlations %>% filter(method == "within_country_pearson") %>%
-        transmute(issue, region, r = round(estimate, 2)) %>%
-        tidyr::pivot_wider(names_from = region, values_from = r) %>% as.data.frame())
+print(correlations %>% filter(method == "within_country_pearson", region == "All Europe") %>%
+        transmute(issue, resolution, r = round(estimate, 2)) %>%
+        tidyr::pivot_wider(names_from = resolution, values_from = r) %>% as.data.frame())

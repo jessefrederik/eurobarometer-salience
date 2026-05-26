@@ -20,11 +20,12 @@ variable each should plausibly respond to:
 
 Salience is the survey-weighted share naming the issue (national context, QA3).
 Correlations are **within country** (per-country z-scores, pooled, so they describe
-over-time co-movement rather than cross-country level differences). For the four
-monthly indicators, each Eurobarometer wave is matched to the **trailing 3-month
-average** of the indicator (the survey month plus the two before it); crime is
-published only annually, so it uses annual means. We report the within-country
-**correlation** (with 95% CI) and a panel fixed-effects slope. Time-series overlays
+over-time co-movement rather than cross-country level differences), at **two
+resolutions**: each Eurobarometer wave matched to the **trailing 3-month average**
+of the indicator, and **annual** means (crime is published only annually, so it has
+no monthly version). The two agree closely — the figures below use the 3-month
+resolution; the annual values are in `correlations.csv` and on the summary plot.
+We report the within-country **correlation** (95% CI) and a panel fixed-effects slope. Time-series overlays
 show salience (%) and the indicator **each min–max scaled to its own range, per
 country** (free axes), so co-movement is visible in every country; each facet is
 labelled with its r.

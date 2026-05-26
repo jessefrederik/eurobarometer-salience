@@ -85,24 +85,27 @@ for (i in seq_len(nrow(ISSUE_MACRO))) with(ISSUE_MACRO[i, ],
 
 # --- (b) correlation summary: West vs East -----------------------------------
 allc <- readr::read_csv(file.path(DIR_DATA, "correlations.csv"), show_col_types = FALSE)
-ord  <- allc %>% filter(method == "within_country_pearson", region == "All Europe") %>%
+ord  <- allc %>% filter(method == "within_country_pearson", region == "All Europe", resolution == "annual") %>%
   arrange(estimate) %>% pull(macro_label)
 corr <- allc %>%
   filter(method == "within_country_pearson",
          region %in% c("Western Europe", "Central & Eastern Europe")) %>%
   mutate(lab = factor(macro_label, levels = ord),
-         region = factor(region, levels = c("Western Europe", "Central & Eastern Europe")))
+         region = factor(region, levels = c("Western Europe", "Central & Eastern Europe")),
+         Resolution = ifelse(resolution == "wave_3m", "Trailing 3-month (monthly)", "Annual"))
 
-p2 <- ggplot(corr, aes(estimate, lab)) +
+p2 <- ggplot(corr, aes(estimate, lab, colour = Resolution, shape = Resolution)) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
-  geom_errorbarh(aes(xmin = ci_low, xmax = ci_high), height = 0.2, na.rm = TRUE, colour = sal_col) +
-  geom_point(size = 3, colour = sal_col) +
+  geom_errorbarh(aes(xmin = ci_low, xmax = ci_high), height = 0.2, na.rm = TRUE,
+                 position = position_dodge(width = 0.4)) +
+  geom_point(size = 2.6, position = position_dodge(width = 0.4)) +
   facet_wrap(~ region) +
+  scale_colour_manual(values = c("Trailing 3-month (monthly)" = sal_col, "Annual" = macro_col)) +
   labs(title = "Does problem perception track real-world conditions? West vs East",
-       subtitle = "Within-country correlation of national salience with each real-world variable (95% CI)",
-       x = "Correlation", y = NULL,
+       subtitle = "Within-country correlation (95% CI), at trailing-3-month and annual resolution. Crime is annual-only.",
+       x = "Correlation", y = NULL, colour = NULL, shape = NULL,
        caption = "Sources: Eurobarometer + Eurostat. Within-country (per-country z-scores), pooled. East = post-communist CEE members.") +
-  theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(),
+  theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), legend.position = "top",
                                    strip.text = element_text(face = "bold"))
 ggsave(file.path(DIR_OUTPUT, "correlation_summary.png"), p2, width = 12, height = 5, dpi = 150)
 message("  -> ", file.path(DIR_OUTPUT, "correlation_summary.png"))
