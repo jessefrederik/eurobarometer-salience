@@ -23,11 +23,20 @@ message("  -> ", file.path(DIR_DATA, "ec_salience.csv"), " (", nrow(ec), " rows,
         dplyr::n_distinct(ec$wave), " waves)")
 
 # --- (A2) Feelings about immigration (EU vs non-EU), all countries ------------
+# Two tiers, like salience: GESIS microdata reaches back to ~2014 (15 waves);
+# the EC open volumes cover 2024-2026. Combined and tagged by source.
 message("Building immigration-feelings (EU vs non-EU, net positive)...")
-feel <- build_immigration_feelings(EC_WAVES, EC_BASE, DIR_VOLUMES)
+feel_ec <- build_immigration_feelings(EC_WAVES, EC_BASE, DIR_VOLUMES) |>
+  dplyr::mutate(source = "ec")
+feel_micro <- if (file.exists(file.path(DIR_DATA, "scaffold.rds"))) {
+  build_immigration_feelings_micro(DATA_ROOT, readRDS(file.path(DIR_DATA, "scaffold.rds"))) |>
+    dplyr::mutate(source = "micro")
+} else { message("  (no scaffold.rds yet -> microdata feelings skipped; run stage 01 first)"); NULL }
+feel <- dplyr::bind_rows(feel_micro, feel_ec) |> dplyr::arrange(origin, country_code, date)
 readr::write_csv(feel, file.path(DIR_DATA, "immigration_feelings.csv"))
 message("  -> ", file.path(DIR_DATA, "immigration_feelings.csv"), " (", nrow(feel), " rows, ",
-        dplyr::n_distinct(feel$country_code), " countries, ", dplyr::n_distinct(feel$wave), " waves)")
+        dplyr::n_distinct(feel$country_code), " countries, ",
+        format(min(feel$date, na.rm = TRUE)), " - ", format(max(feel$date, na.rm = TRUE)), ")")
 
 # --- (B) GESIS microdata (optional) ------------------------------------------
 local_rds <- list.files(DATA_ROOT, pattern = "\\.rds$", full.names = TRUE)

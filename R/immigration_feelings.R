@@ -55,6 +55,55 @@
     filter(!is.na(country_code), !is.na(net))
 }
 
+# --- Microdata tier (GESIS EB waves) -----------------------------------------
+# The same feelings question reaches back to ~2014 in the GESIS microdata. The
+# variable names vary per wave (qa11/qa10/qb1/qb3/qb4/qb7/qb8 ...) so we locate
+# the two items by their label ("FEELING TOWARDS IMMIGRATION ... EU MEMBERS" /
+# "... OUTSIDE [the EU]"). Country = isocntry, weight = w1, codes 1-4 + DK(5).
+.feel_norm_iso <- function(x) {
+  x <- toupper(stringr::str_squish(as.character(x)))
+  dplyr::case_when(
+    stringr::str_detect(x, "TCC")        ~ "CY-TCC",
+    stringr::str_detect(x, "^DE")        ~ "DE",
+    stringr::str_detect(x, "^GB|^UK")    ~ "UK",
+    x == "GR"                            ~ "EL",
+    TRUE ~ x
+  )
+}
+
+build_immigration_feelings_micro <- function(data_root, scaffold) {
+  studydate <- scaffold %>% dplyr::group_by(study) %>%
+    dplyr::summarise(date = as.Date(names(sort(table(date), decreasing = TRUE))[1]),
+                     .groups = "drop")
+  fs <- list.files(data_root, pattern = "rds$", full.names = TRUE)
+  out <- list()
+  for (f in fs) {
+    d <- tryCatch(readRDS(f), error = function(e) NULL); if (is.null(d)) next
+    if (!"isocntry" %in% names(d) || !"w1" %in% names(d)) next
+    study <- stringr::str_remove(basename(f), "\\.rds$")
+    labs <- purrr::map_chr(d, function(x) { l <- attr(x, "label"); if (is.null(l)) "" else l })
+    eu_v  <- names(labs)[stringr::str_detect(labs, stringr::regex("FEELING TOWARDS IMMIGRATION.*EU MEM", ignore_case = TRUE))][1]
+    non_v <- names(labs)[stringr::str_detect(labs, stringr::regex("FEELING TOWARDS IMMIGRATION.*OUTSI", ignore_case = TRUE))][1]
+    if (is.na(eu_v) && is.na(non_v)) next
+    iso <- .feel_norm_iso(as.character(haven::as_factor(d$isocntry)))
+    w   <- as.numeric(d$w1); w[is.na(w) | w < 0] <- 0
+    dte <- studydate$date[studydate$study == study]; if (length(dte) == 0) dte <- as.Date(NA)
+    for (it in list(c(eu_v, "eu"), c(non_v, "non_eu"))) {
+      v <- it[1]; origin <- it[2]; if (is.na(v)) next
+      x <- as.numeric(d[[v]]); x[!(x %in% 1:5)] <- NA          # base = valid 1-4 + DK(5)
+      ok <- !is.na(x) & !is.na(iso) & w > 0
+      out[[length(out) + 1]] <- tibble(country_code = iso[ok], x = x[ok], w = w[ok]) %>%
+        dplyr::group_by(country_code) %>%
+        dplyr::summarise(positive = round(100 * weighted.mean(x %in% 1:2, w), 1),
+                         negative = round(100 * weighted.mean(x %in% 3:4, w), 1),
+                         .groups = "drop") %>%
+        dplyr::mutate(net = round(positive - negative, 1),
+                      wave = study, date = dte, origin = origin)
+    }
+  }
+  bind_rows(out) %>% select(wave, date, country_code, origin, positive, negative, net)
+}
+
 # Build the all-country, all-wave feelings table. Relies on the volumes already
 # being cached in vol_dir (the salience build downloads them).
 build_immigration_feelings <- function(ec_waves, base_url, vol_dir) {
