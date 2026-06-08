@@ -12,6 +12,7 @@
 
 source("config.R")
 source("R/ec_volumes.R")
+source("R/immigration_feelings.R")
 library(readxl)
 
 # --- (A) EC open volumes ------------------------------------------------------
@@ -20,6 +21,13 @@ ec <- build_ec_salience(EC_WAVES, issue_specs, EC_BASE, DIR_VOLUMES)
 readr::write_csv(ec, file.path(DIR_DATA, "ec_salience.csv"))
 message("  -> ", file.path(DIR_DATA, "ec_salience.csv"), " (", nrow(ec), " rows, ",
         dplyr::n_distinct(ec$wave), " waves)")
+
+# --- (A2) Feelings about immigration (EU vs non-EU), all countries ------------
+message("Building immigration-feelings (EU vs non-EU, net positive)...")
+feel <- build_immigration_feelings(EC_WAVES, EC_BASE, DIR_VOLUMES)
+readr::write_csv(feel, file.path(DIR_DATA, "immigration_feelings.csv"))
+message("  -> ", file.path(DIR_DATA, "immigration_feelings.csv"), " (", nrow(feel), " rows, ",
+        dplyr::n_distinct(feel$country_code), " countries, ", dplyr::n_distinct(feel$wave), " waves)")
 
 # --- (B) GESIS microdata (optional) ------------------------------------------
 local_rds <- list.files(DATA_ROOT, pattern = "\\.rds$", full.names = TRUE)
